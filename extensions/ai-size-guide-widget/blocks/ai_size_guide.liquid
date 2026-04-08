@@ -3,7 +3,7 @@
   <button id="asg-open-btn" style="background:rgb(var(--color-button));color:rgb(var(--color-button-text));font-family:var(--font-body-family);border:none;padding:12px 24px;font-size:14px;cursor:pointer;margin:8px 0;width:100%;border-radius:var(--buttons-radius,4px);">AI Size Guide</button>
   <div id="asg-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:12px;padding:32px;width:90%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative;">
-      <button id="asg-close" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      <button id="asg-close" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;">&#x2715;</button>
       <div id="asg-step-form">
         <h2 style="margin:0 0 4px;font-size:20px;">Dein Körperprofil</h2>
         <p style="margin:0 0 20px;font-size:13px;color:#666;">Alle Felder optional</p>
@@ -37,7 +37,7 @@
         <button id="asg-submit" style="width:100%;margin-top:20px;padding:14px;background:#000;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Meine Größe finden</button>
       </div>
       <div id="asg-step-loading" style="display:none;text-align:center;padding:40px 0;">
-        <p id="asg-loading-msg" style="font-size:15px;color:#666;">Analysiere deine Maße…</p>
+        <p id="asg-loading-msg" style="font-size:15px;color:#666;">Analysiere deine Maße...</p>
       </div>
       <div id="asg-step-result" style="display:none;">
         <p style="margin:0 0 8px;font-size:13px;color:#666;text-align:center;">Deine empfohlene Größe</p>
@@ -45,75 +45,118 @@
         <div id="asg-alt-size" style="text-align:center;font-size:13px;color:#666;margin-bottom:16px;"></div>
         <div id="asg-explanation" style="font-size:14px;line-height:1.6;margin-bottom:12px;"></div>
         <div id="asg-fit-note" style="font-size:13px;color:#555;background:#f5f5f5;border-radius:8px;padding:12px;"></div>
-        <button id="asg-edit" style="margin-top:20px;background:none;border:none;font-size:13px;color:#666;cursor:pointer;text-decoration:underline;">← Profil bearbeiten</button>
+        <button id="asg-edit" style="margin-top:20px;background:none;border:none;font-size:13px;color:#666;cursor:pointer;text-decoration:underline;">&#8592; Profil bearbeiten</button>
       </div>
     </div>
   </div>
 </div>
 <script>
 (function(){
-  const STORAGE_KEY='tates_body_profile';
-  const API_URL='{{ block.settings.api_url }}';
-  const MEASUREMENTS={{ product.metafields.custom.measurements.value }};
-  let fitPref='Normal';
-  const $=id=>document.getElementById(id);
-  function loadProfile(){
-    try{
-      const p=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-      if(p.height)$('asg-height').value=p.height;
-      if(p.weight)$('asg-weight').value=p.weight;
-      if(p.cup)$('asg-cup').value=p.cup;
-      if(p.figure)$('asg-figure').value=p.figure;
-      if(p.bust)$('asg-bust').value=p.bust;
-      if(p.waist)$('asg-waist').value=p.waist;
-      if(p.hip)$('asg-hip').value=p.hip;
-      if(p.inseam)$('asg-inseam').value=p.inseam;
-      if(p.fitPref){fitPref=p.fitPref;updateFitBtns();}
-    }catch(e){}
+  var STORAGE_KEY = 'tates_body_profile';
+  var API_URL = '{{ block.settings.api_url }}';
+  var MEASUREMENTS = {{ product.metafields.custom.measurements.value | json }};
+  var fitPref = 'Normal';
+
+  function getEl(id) { return document.getElementById(id); }
+
+  function loadProfile() {
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      var p = stored ? JSON.parse(stored) : {};
+      if(p.height) getEl('asg-height').value = p.height;
+      if(p.weight) getEl('asg-weight').value = p.weight;
+      if(p.cup) getEl('asg-cup').value = p.cup;
+      if(p.figure) getEl('asg-figure').value = p.figure;
+      if(p.bust) getEl('asg-bust').value = p.bust;
+      if(p.waist) getEl('asg-waist').value = p.waist;
+      if(p.hip) getEl('asg-hip').value = p.hip;
+      if(p.inseam) getEl('asg-inseam').value = p.inseam;
+      if(p.fitPref) { fitPref = p.fitPref; updateFitBtns(); }
+    } catch(e) {}
   }
-  function saveProfile(){
-    const p={height:$('asg-height').value,weight:$('asg-weight').value,cup:$('asg-cup').value,figure:$('asg-figure').value,bust:$('asg-bust').value,waist:$('asg-waist').value,hip:$('asg-hip').value,inseam:$('asg-inseam').value,fitPref};
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(p));
+
+  function saveProfile() {
+    var p = {
+      height: getEl('asg-height').value,
+      weight: getEl('asg-weight').value,
+      cup: getEl('asg-cup').value,
+      figure: getEl('asg-figure').value,
+      bust: getEl('asg-bust').value,
+      waist: getEl('asg-waist').value,
+      hip: getEl('asg-hip').value,
+      inseam: getEl('asg-inseam').value,
+      fitPref: fitPref
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
     return p;
   }
-  function updateFitBtns(){
-    document.querySelectorAll('.asg-fit-btn').forEach(b=>{
-      b.style.background=b.dataset.val===fitPref?'#000':'#fff';
-      b.style.color=b.dataset.val===fitPref?'#fff':'#000';
+
+  function updateFitBtns() {
+    var btns = document.querySelectorAll('.asg-fit-btn');
+    for(var i = 0; i < btns.length; i++) {
+      btns[i].style.background = btns[i].getAttribute('data-val') === fitPref ? '#000' : '#fff';
+      btns[i].style.color = btns[i].getAttribute('data-val') === fitPref ? '#fff' : '#000';
+    }
+  }
+
+  var fitBtns = document.querySelectorAll('.asg-fit-btn');
+  for(var i = 0; i < fitBtns.length; i++) {
+    fitBtns[i].addEventListener('click', function() {
+      fitPref = this.getAttribute('data-val');
+      updateFitBtns();
     });
   }
-  document.querySelectorAll('.asg-fit-btn').forEach(b=>{
-    b.addEventListener('click',()=>{fitPref=b.dataset.val;updateFitBtns();});
-  });
-  $('asg-open-btn').addEventListener('click',()=>{loadProfile();$('asg-overlay').style.display='flex';showStep('form');});
-  $('asg-close').addEventListener('click',()=>{$('asg-overlay').style.display='none';});
-  $('asg-edit').addEventListener('click',()=>showStep('form'));
-  function showStep(s){
-    $('asg-step-form').style.display=s==='form'?'block':'none';
-    $('asg-step-loading').style.display=s==='loading'?'block':'none';
-    $('asg-step-result').style.display=s==='result'?'block':'none';
+
+  function showStep(s) {
+    getEl('asg-step-form').style.display = s === 'form' ? 'block' : 'none';
+    getEl('asg-step-loading').style.display = s === 'loading' ? 'block' : 'none';
+    getEl('asg-step-result').style.display = s === 'result' ? 'block' : 'none';
   }
-  const msgs=['Analysiere deine Maße…','Vergleiche mit Produktdaten…','Berechne beste Passform…','Fast fertig…'];
-  let msgIdx=0;
-  function cycleMsg(){$('asg-loading-msg').textContent=msgs[msgIdx++%msgs.length];}
-  $('asg-submit').addEventListener('click',async()=>{
-    const profile=saveProfile();
+
+  var msgs = ['Analysiere deine Maße...', 'Vergleiche mit Produktdaten...', 'Berechne beste Passform...', 'Fast fertig...'];
+  var msgIdx = 0;
+  function cycleMsg() {
+    getEl('asg-loading-msg').textContent = msgs[msgIdx % msgs.length];
+    msgIdx++;
+  }
+
+  getEl('asg-open-btn').addEventListener('click', function() {
+    loadProfile();
+    getEl('asg-overlay').style.display = 'flex';
+    showStep('form');
+  });
+
+  getEl('asg-close').addEventListener('click', function() {
+    getEl('asg-overlay').style.display = 'none';
+  });
+
+  getEl('asg-edit').addEventListener('click', function() {
+    showStep('form');
+  });
+
+  getEl('asg-submit').addEventListener('click', function() {
+    var profile = saveProfile();
     showStep('loading');
-    const interval=setInterval(cycleMsg,1200);
-    try{
-      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile,measurements:MEASUREMENTS})});
-      const data=await res.json();
-      clearInterval(interval);
-      $('asg-rec-size').textContent=data.recommendedSize||'—';
-      $('asg-alt-size').textContent=data.alternativeSize?'Alternative: '+data.alternativeSize:'';
-      $('asg-explanation').textContent=data.explanation||'';
-      $('asg-fit-note').textContent=data.fitNote||'';
-      showStep('result');
-    }catch(e){
-      clearInterval(interval);
-      $('asg-explanation').textContent='Fehler. Bitte erneut versuchen.';
-      showStep('result');
-    }
+    var interval = setInterval(cycleMsg, 1200);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', API_URL, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+      if(xhr.readyState === 4) {
+        clearInterval(interval);
+        try {
+          var data = JSON.parse(xhr.responseText);
+          getEl('asg-rec-size').textContent = data.recommendedSize || '-';
+          getEl('asg-alt-size').textContent = data.alternativeSize ? 'Alternative: ' + data.alternativeSize : '';
+          getEl('asg-explanation').textContent = data.explanation || '';
+          getEl('asg-fit-note').textContent = data.fitNote || '';
+        } catch(e) {
+          getEl('asg-explanation').textContent = 'Fehler. Bitte erneut versuchen.';
+        }
+        showStep('result');
+      }
+    };
+    xhr.send(JSON.stringify({profile: profile, measurements: MEASUREMENTS}));
   });
 })();
 </script>
