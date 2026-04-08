@@ -1,6 +1,6 @@
 {% if product.metafields.custom.ai_size_guide == true %}
 <div id="ai-size-guide-root">
-  <button id="asg-open-btn" style="background:#000;color:#fff;border:none;padding:12px 24px;font-size:14px;cursor:pointer;margin:8px 0;width:100%;">AI Size Guide</button>
+  <button id="asg-open-btn" style="background:rgb(var(--color-button));color:rgb(var(--color-button-text));font-family:var(--font-body-family);border:none;padding:12px 24px;font-size:14px;cursor:pointer;margin:8px 0;width:100%;border-radius:var(--buttons-radius,4px);">AI Size Guide</button>
   <div id="asg-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:12px;padding:32px;width:90%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative;">
       <button id="asg-close" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
@@ -54,6 +54,7 @@
 (function(){
   const STORAGE_KEY='tates_body_profile';
   const API_URL='{{ block.settings.api_url }}';
+  const MEASUREMENTS={{ product.metafields.custom.measurements.value }};
   let fitPref='Normal';
   const $=id=>document.getElementById(id);
   function loadProfile(){
@@ -100,7 +101,7 @@
     showStep('loading');
     const interval=setInterval(cycleMsg,1200);
     try{
-      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile,measurements:{}})});
+      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile,measurements:MEASUREMENTS})});
       const data=await res.json();
       clearInterval(interval);
       $('asg-rec-size').textContent=data.recommendedSize||'—';
@@ -127,7 +128,7 @@
       "type": "text",
       "id": "api_url",
       "label": "API URL",
-      "default": "https://your-api-url.com/functions/v1/size-recommendation"
+      "default": "https://ai-size-guide-proxy-production.up.railway.app/api/size-recommendation"
     }
   ]
 }
