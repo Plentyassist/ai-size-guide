@@ -1,4 +1,4 @@
-import { json } from "@shopify/remix-oxygen";
+import { data as json } from "react-router";
 import { useLoaderData } from "react-router";
 
 export async function loader() {
