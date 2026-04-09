@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs } from "@shopify/remix-oxygen";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "react-router";
 import { Page, Card, DataTable, Text, BlockStack, InlineGrid, Box } from "@shopify/polaris";
 
 export async function loader({ request }: LoaderFunctionArgs) {
